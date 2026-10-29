@@ -39,3 +39,11 @@ image = np.abs(field) ** 2                   # pixel pitch dxi = lambda z / (N d
 ```
 
 Audit findings: `../Vault_Tesis_Holografia/07_Auditoria_Tecnica_Integral/03_Auditoria_Numerica_holom_core.md`.
+
+## Versioning & Scientific Traceability
+
+- **Current Release:** `v0.1.0` (Git Tag: `v0.1.0`).
+- **Commit Convention:** Follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `perf:`).
+- **CI / CD:** Automated GitHub Actions matrix workflow testing on Ubuntu, Windows, and macOS across Python 3.10, 3.11, and 3.12.
+- **Publication Target:** *SoftwareX (Elsevier)* / *Journal of Open Source Software (JOSS)*.
+
