@@ -1,110 +1,93 @@
-"""3D shape of a real object from a single off-axis hologram (depth from focus).
+"""3-D shape of real objects by depth from focus (holom.focus.depth_from_focus).
 
-Usage: python audit/depth_from_focus.py <hologram.bmp> <z_min_cm> <z_max_cm> <step_cm> <out_prefix>
+Usage: python audit/depth_from_focus.py   (writes audit/out/depth_*.png, *.ply, depth_real.json)
 
-1. Isolate the +1 order (O R*) with a sideband filter: no zero order, no twin.
-2. Refocus with the single-FFT Fresnel transform at every z of the scan.
-3. Resample each plane to a common physical grid (Δξ grows with z, λz/(NΔx)).
-4. Per-pixel focus measure: local Tenengrad of the speckle-averaged intensity.
-5. Depth = z of maximum focus, kept only where the object is bright and the
-   focus curve has a clear peak. Writes a depth map, an all-in-focus image,
-   a PLY point cloud and a JSON summary.
+- Aeroplane: object wave O R* from the four phase-shifted holograms (no zero order, no twin).
+- Die: single hologram minus its mean; the analysis is limited to the window of its real image.
+Depth is the z of minimum local focus measure (validated on two simulated depths). An earlier
+version of this script filled pixels outside each plane with 0, which created false foci at
+the edge of the scan; its die result (median 12.0 cm) is superseded.
 """
 import json
-import sys
 from pathlib import Path
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-from holom import filters
+from holom import filters, focus
 from holom.diffraction import fresnel
 
-WL, DX = 532e-9, 2.2e-6
+R = Path(__file__).resolve().parents[2] / 'Algunos Resultados'
+OUT = Path(__file__).resolve().parent / 'out'
+WL, DX, N, B = 532e-9, 2.2e-6, 1944, 4
 
 
-def sideband(h):
-    S = np.abs(np.fft.fftshift(np.fft.fft2(h)))
-    ny, nx = h.shape
-    cy, cx = ny // 2, nx // 2
-    S[cy - 60:cy + 61, cx - 60:cx + 61] = 0
-    py, px = np.unravel_index(S.argmax(), S.shape)
-    dy, dx = py - cy, px - cx
-    r = int(0.45 * np.hypot(dy, dx))
-    return filters.sideband_filter(h, (dy, dx), r), (dy, dx, r)
+def green(p):
+    return np.asarray(Image.open(p))[:N, :N, 1].astype(float)
+
+
+def intensity(field, z):
+    u, _, _ = fresnel(field, WL, DX, DX, z)
+    m = N // B
+    return (np.abs(u) ** 2).reshape(m, B, m, B).mean(axis=(1, 3))
+
+
+def analyse(name, field, zs, window=None):
+    depth, valid, pitch = focus.depth_from_focus(field, WL, DX, zs, block=B)
+    z_ref = float(zs[len(zs) // 2])
+    I = intensity(field, z_ref)
+    Is = ndimage.gaussian_filter(I, 2)
+    bright = Is > np.percentile(Is if window is None else Is[window], 70)
+    mask = valid & bright
+    if window is not None:
+        w = np.zeros_like(mask); w[window] = True; mask &= w
+    zcm = -depth * 100
+    n_obj = int(mask.sum())
+    interior = (depth != zs[0]) & (depth != zs[-1])    # a minimum on the scan edge is not a focus
+    mask &= interior
+    med = ndimage.median_filter(np.where(mask, zcm, np.nan), 7)
+    keep = mask & (np.abs(zcm - med) < 1.0)          # drop isolated outliers
+    vals = zcm[keep]
+    summary = {'name': name, 'z_scan_cm': [float(-zs[0] * 100), float(-zs[-1] * 100)], 'z_ref_cm': -z_ref * 100,
+               'pixel_mm': pitch * 1e3, 'object_pixels': n_obj, 'interior_minima': int(mask.sum()),
+               'points': int(keep.sum()), 'z_cm_iqr': float(np.subtract(*np.percentile(vals, [75, 25]))) if vals.size else None,
+               'z_cm_p5_p50_p95': [float(np.percentile(vals, q)) for q in (5, 50, 95)] if vals.size else None}
+    fig, ax = plt.subplots(1, 3, figsize=(16, 5.2))
+    ax[0].imshow(np.sqrt(I), cmap='gray', vmax=np.percentile(np.sqrt(I), 99.7)); ax[0].set_title(f'{name}: intensidad a z = {-z_ref*100:.1f} cm')
+    im = ax[1].imshow(np.where(keep, zcm, np.nan), cmap='viridis'); ax[1].set_title('Mapa de profundidad z (cm)')
+    plt.colorbar(im, ax=ax[1], fraction=0.046)
+    ax[2].hist(vals, bins=40, color='#b3246b'); ax[2].set_xlabel('z (cm)'); ax[2].set_title('Distribución de z en el objeto')
+    for a in ax[:2]:
+        a.axis('off')
+    fig.tight_layout(); fig.savefig(OUT / f'depth_{name}.png', dpi=60); plt.close(fig)
+    yy, xx = np.nonzero(keep)
+    m = I.shape[0]
+    imax = np.sqrt(I[keep]).max() if len(yy) else 1
+    with open(OUT / f'depth_{name}.ply', 'w') as f:
+        f.write(f'ply\nformat ascii 1.0\nelement vertex {len(yy)}\nproperty float x\nproperty float y\nproperty float z\n'
+                'property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n')
+        for y, x in zip(yy, xx):
+            v = int(255 * min(1, np.sqrt(I[y, x]) / imax))
+            f.write(f'{(x - m / 2) * pitch * 1e3:.3f} {(y - m / 2) * pitch * 1e3:.3f} {zcm[y, x] * 10:.2f} {v} {v} {v}\n')
+    print(summary)
+    return summary
 
 
 def main():
-    path, z0, z1, dz, prefix = sys.argv[1], *map(float, sys.argv[2:5]), sys.argv[5]
-    h = np.asarray(Image.open(path))[..., 1].astype(float)
-    n = min(h.shape)
-    h = h[:n, :n] - h[:n, :n].mean()                    # square crop of the sensor
-    # full bandwidth: the low carrier of these holograms makes a sideband filter too narrow;
-    # the real image is spatially separated from the twin and the zero order in the Fresnel plane
-    U0, sb = h.astype(complex), (0, 0, 0)
-    zs = np.arange(z0, z1 + 1e-9, dz) / 100
-    zref = zs[len(zs) // 2]
-    ds = 4                                              # analysis grid: n/ds pixels
-    m = n // ds
-    stack, inten = [], []
-    for z in zs:
-        u, dxi, _ = fresnel(U0, WL, DX, DX, -z)
-        I = np.abs(u) ** 2
-        I = I.reshape(m, ds, m, ds).mean(axis=(1, 3))     # block average: speckle reduction
-        # resample to the physical grid of zref: coordinate scale z/zref
-        k = zref / z
-        c = (m - 1) / 2
-        I = ndimage.affine_transform(I, [k, k], offset=[c - k * c, c - k * c], order=1)
-        Is = ndimage.gaussian_filter(I, 2.0)
-        gx, gy = ndimage.sobel(Is, 1), ndimage.sobel(Is, 0)
-        F = ndimage.uniform_filter(gx * gx + gy * gy, 15) / (ndimage.uniform_filter(Is, 15) ** 2 + 1e-12)
-        stack.append(F); inten.append(I)
-    stack, inten = np.array(stack), np.array(inten)
-    k = stack.argmax(0)
-    peak = stack.max(0) / (np.median(stack, 0) + 1e-12)   # focus-curve contrast
-    depth = zs[k] * 100
-    allfocus = np.take_along_axis(inten, k[None], 0)[0]
-    bright = ndimage.gaussian_filter(allfocus, 3)
-    # analysis window around the real image (largest bright blob outside the zero order)
-    b = bright.copy(); c0 = m // 2; w0 = m // 10
-    b[c0 - w0:c0 + w0, c0 - w0:c0 + w0] = 0
-    oy, ox = np.unravel_index(ndimage.gaussian_filter(b, 6).argmax(), b.shape)
-    Y, X = np.ogrid[:m, :m]
-    win = (np.abs(Y - oy) < m // 7) & (np.abs(X - ox) < m // 7)
-    mask = win & (bright > np.percentile(bright[win], 40)) & (peak > 1.3)
-    dmed = ndimage.median_filter(np.where(mask, depth, np.nan), 9)
-
-    out = Path(prefix)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
-    ax[0].imshow(allfocus ** 0.5, cmap='gray'); ax[0].set_title('Imagen todo-enfocado')
-    im = ax[1].imshow(np.where(mask, dmed, np.nan), cmap='viridis'); ax[1].set_title('Mapa de profundidad z (cm)')
-    plt.colorbar(im, ax=ax[1], fraction=0.046)
-    yy, xx = np.nonzero(mask)
-    ax[2].hist(depth[mask], bins=40, color='#b3246b'); ax[2].set_title('Distribución de z en el objeto'); ax[2].set_xlabel('z (cm)')
-    for a in ax[:2]: a.axis('off')
-    fig.tight_layout(); fig.savefig(str(out) + '_depth.png', dpi=90); plt.close(fig)
-
-    dxi_ref = WL * zref / (n * DX) * ds * 1e3          # mm per analysis pixel
-    pts = [(float((x - m / 2) * dxi_ref), float((y - m / 2) * dxi_ref), float(depth[y, x] * 10), float(allfocus[y, x]))
-           for y, x in zip(yy, xx)]
-    imax = max(p[3] for p in pts) or 1
-    with open(str(out) + '.ply', 'w') as f:
-        f.write(f'ply\nformat ascii 1.0\nelement vertex {len(pts)}\nproperty float x\nproperty float y\nproperty float z\n'
-                'property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n')
-        for x, y, z, i in pts:
-            v = int(255 * min(1, (i / imax) ** 0.5))
-            f.write(f'{x:.3f} {y:.3f} {z:.3f} {v} {v} {v}\n')
-    summary = {'hologram': path, 'sideband_dy_dx_r': [int(v) for v in sb], 'z_scan_cm': [z0, z1, dz], 'z_ref_cm': zref * 100,
-               'pixel_mm': dxi_ref, 'points': len(pts),
-               'depth_cm_percentiles_5_50_95': [float(np.percentile(depth[mask], q)) for q in (5, 50, 95)] if mask.any() else None,
-               'depth_of_field_mm_lambda_over_NA2': float(WL / (n * DX / (2 * zref)) ** 2 * 1e3)}
-    Path(str(out) + '.json').write_text(json.dumps(summary, indent=1), encoding='utf-8')
-    print(json.dumps(summary, indent=1))
+    OUT.mkdir(exist_ok=True)
+    d = R / 'DH_REconstruccion_Final/Pactrica_Reconstruccion'
+    I = [green(d / f'I{k}Holograma_Avion_16042015_22.bmp') for k in (1, 2, 3, 4)]
+    res = [analyse('avion_psi', filters.phase_shifting_4step(*I), -np.arange(0.15, 0.4001, 0.005))]
+    dado = filters.subtract_mean(green(R / 'DHFresnel_GOM/2Holograma_dado_16042015_14.bmp'))
+    # real-image window chosen on a reconstruction at 13 cm (rows 245-330, cols 290-395), rescaled to z_ref = 14 cm
+    k, c = 0.14 / 0.13, (N // B - 1) / 2
+    win = (slice(int(c + (245 - c) * k), int(c + (330 - c) * k)), slice(int(c + (290 - c) * k), int(c + (395 - c) * k)))
+    res.append(analyse('dado', dado, -np.arange(0.08, 0.2001, 0.0025), window=win))
+    (OUT / 'depth_real.json').write_text(json.dumps(res, indent=1), encoding='utf-8')
 
 
 if __name__ == '__main__':

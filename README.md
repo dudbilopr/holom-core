@@ -14,6 +14,10 @@ The MATLAB sources in `../HOLO_GOM` and `../Tesis Pregrado/.../HGC_GOM_V2012` ar
 | `holom.diffraction` | `fresnel` (single FFT), `fresnel_convolution` (3 FFTs, optional zero padding), `angular_spectrum`, `fresnel_legacy` (verbatim port of `Fresnel.m`) |
 | `holom.cgh` | Burch, Kinoform, SquareWave, Fourier, FourierReal, FourierImag, Cuaternario, CrossedSquareWave |
 | `holom.filters` | mean subtraction, FFT high-pass, Laplacian, 4-step phase shifting, sideband filter |
+| `holom.cgh_methods` | Gerchberg-Saxton, weighted GS (optical tweezers), Burch, Lee, Lohmann, double phase, fork/LG (OAM), point-cloud and layer 3-D CGH, DRPE |
+| `holom.focus` | multi-plane refocusing on a common physical grid; ROI autofocus (Tenengrad, Tamura); per-pixel `depth_from_focus` (validated in simulation; does not yet resolve the real 2015 holograms) |
+| `holom.legacy` | faithful ports of the 53 MATLAB files of the 2012–2015 archive, defects documented |
+| `holom.gpu` | `FresnelPlan` (precomputed chirps, PyTorch/CUDA), `angular_spectrum_torch`; install with `pip install -e ".[gpu]"` |
 | `holom.simulate` | off-axis Fresnel holograms with the 2015 setup parameters (`THESIS_2015`) |
 
 ## Setup

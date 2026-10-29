@@ -81,8 +81,9 @@ def angular_spectrum_torch(u0, wavelength, dx, dy, z, device=None, dtype=None):
     rdt = torch.float32 if cdt == torch.complex64 else torch.float64
     u = torch.as_tensor(u0, device=dev).to(cdt)
     ny, nx = u.shape
-    fy = torch.fft.fftfreq(ny, dy, device=dev, dtype=rdt)
-    fx = torch.fft.fftfreq(nx, dx, device=dev, dtype=rdt)
+    f64 = torch.float64                                  # kz z reaches ~1e5 rad: transfer function in double
+    fy = torch.fft.fftfreq(ny, dy, device=dev, dtype=f64)
+    fx = torch.fft.fftfreq(nx, dx, device=dev, dtype=f64)
     FY, FX = torch.meshgrid(fy, fx, indexing='ij')
     arg = 1.0 - (wavelength * FX) ** 2 - (wavelength * FY) ** 2
     kz = 2 * np.pi / wavelength * torch.sqrt(torch.clamp(arg, min=0))

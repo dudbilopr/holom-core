@@ -43,3 +43,29 @@ def test_metrics_are_scale_invariant():
     I = np.random.default_rng(2).random((64, 64)) + 1
     for f in focus.METRICS.values():
         assert f(I) == pytest.approx(f(7.0 * I), rel=1e-9)
+
+
+def test_depth_from_focus_separates_two_depths():
+    rng = np.random.default_rng(0)
+
+    def obj_field(z, rows, cols):
+        d = WL * z / (N * DX)
+        o = np.zeros((N, N)); o[rows, cols] = 1
+        o[rows.start + 15:rows.start + 30, cols.start + 15:cols.start + 30] = 0
+        from holom.diffraction import fresnel
+        return fresnel(o * np.exp(2j * np.pi * rng.random((N, N))), WL, d, d, z)[0]
+
+    O = obj_field(0.12, slice(100, 200), slice(80, 180)) + obj_field(0.18, slice(300, 400), slice(320, 420))
+    zs = -np.arange(0.08, 0.2201, 0.005)
+    depth, valid, _ = focus.depth_from_focus(O, WL, DX, zs)
+    c, zref = 63.5, 0.15
+
+    def region(z, rows, cols):
+        k = z / zref
+        return (slice(int(c + (rows.start / 4 - c) * k), int(c + (rows.stop / 4 - c) * k)),
+                slice(int(c + (cols.start / 4 - c) * k), int(c + (cols.stop / 4 - c) * k)))
+
+    ra, rb = region(0.12, slice(100, 200), slice(80, 180)), region(0.18, slice(300, 400), slice(320, 420))
+    assert valid[ra].all() and valid[rb].all()
+    assert abs(-np.median(depth[ra]) - 0.12) < 0.0076
+    assert abs(-np.median(depth[rb]) - 0.18) < 0.0076

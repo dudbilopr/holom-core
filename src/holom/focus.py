@@ -100,3 +100,38 @@ def autofocus(h, wavelength, dx, zs, roi, metric='tenengrad', block=4):
     depth = float((low_edge - curve[i]) / (low_edge + 1e-30))  # 0: no dip, 1: metric vanishes at focus
     return {'z_best': float(np.asarray(zs)[i]), 'curve': curve, 'zs': np.asarray(zs), 'roi': roi,
             'pitch_m': pitch, 'peak_at_edge': i in (0, len(zs) - 1), 'dip_depth': depth}
+
+
+def local_focus_stack(field, wavelength, dx, zs, block=4, window=9, z_ref=None):
+    """Per-pixel focus measure for every z: local Tenengrad of the block-averaged intensity,
+    computed on each plane's native grid and then resampled to the physical grid of z_ref.
+    Pixels whose physical position falls outside a plane are NaN (filling them with 0 would
+    create a false focus at the edge of the scan). Returns (stack, pitch_ref_m)."""
+    h = np.asarray(field)
+    ny, nx = h.shape
+    my, mx = ny // block, nx // block
+    zs = np.asarray(zs, dtype=float)
+    z_ref = float(z_ref if z_ref is not None else zs[len(zs) // 2])
+    cy, cx = (my - 1) / 2, (mx - 1) / 2
+    out = np.empty((len(zs), my, mx))
+    for i, z in enumerate(zs):
+        u, _, _ = fresnel(h, wavelength, dx, dx, z)
+        I = (np.abs(u[:my * block, :mx * block]) ** 2).reshape(my, block, mx, block).mean(axis=(1, 3))
+        Is = ndimage.gaussian_filter(I, 1.0)
+        g = ndimage.sobel(Is, 0) ** 2 + ndimage.sobel(Is, 1) ** 2
+        F = ndimage.uniform_filter(g, window) / (ndimage.uniform_filter(Is, window) ** 2 + 1e-30)
+        k = z_ref / z
+        out[i] = ndimage.affine_transform(F, [k, k], offset=[cy - k * cy, cx - k * cx], order=1, cval=np.nan)
+    return out, wavelength * abs(z_ref) / (nx * dx) * block
+
+
+def depth_from_focus(field, wavelength, dx, zs, block=4, window=9):
+    """Depth map z(x, y): at every pixel, the z of minimum local focus measure (the same extremum
+    as the ROI autofocus; validated on two diffuse objects at 12 and 18 cm, tests/test_focus.py).
+    Use a field free of zero order and twin when possible (phase-shifting O R*).
+    Returns (depth_m on the z_ref grid, valid mask, pitch_m)."""
+    st, pitch = local_focus_stack(field, wavelength, dx, zs, block=block, window=window)
+    finite = np.isfinite(st)
+    idx = np.argmin(np.where(finite, st, np.inf), axis=0)
+    valid = finite.sum(axis=0) > 0.6 * len(zs)
+    return np.asarray(zs)[idx], valid, pitch
