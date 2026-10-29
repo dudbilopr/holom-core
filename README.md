@@ -44,6 +44,6 @@ Audit findings: `../Vault_Tesis_Holografia/07_Auditoria_Tecnica_Integral/03_Audi
 
 - **Current Release:** `v0.1.0` (Git Tag: `v0.1.0`).
 - **Commit Convention:** Follows [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `perf:`).
-- **CI / CD:** Automated GitHub Actions matrix workflow testing on Ubuntu, Windows, and macOS across Python 3.10, 3.11, and 3.12.
+- **CI / CD:** `.github/workflows/ci.yml` defines a test matrix (Ubuntu, Windows, macOS; Python 3.10–3.12). It will run once the repository is pushed to GitHub; so far the suite has been run locally only (Windows, Python 3.14).
 - **Publication Target:** *SoftwareX (Elsevier)* / *Journal of Open Source Software (JOSS)*.
 

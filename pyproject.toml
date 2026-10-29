@@ -8,10 +8,11 @@ version = "0.1.0"
 description = "Python port and audit of the HGC-GOM (2012) and HOLO_GOM (2015) digital holography codes"
 authors = [{ name = "Dudbil Olvasada Pabón Riaño" }]
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24", "pillow>=10"]
+dependencies = ["numpy>=1.24", "scipy>=1.10", "pillow>=10"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "scipy>=1.10", "matplotlib>=3.7"]
+dev = ["pytest>=7", "matplotlib>=3.7"]
+gpu = ["torch>=2.9"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

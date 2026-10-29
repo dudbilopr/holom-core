@@ -29,7 +29,6 @@ def sideband(h):
     ny, nx = h.shape
     cy, cx = ny // 2, nx // 2
     S[cy - 60:cy + 61, cx - 60:cx + 61] = 0
-    S[:, :cx - 2] = S[:, :cx - 2] if True else 0
     py, px = np.unravel_index(S.argmax(), S.shape)
     dy, dx = py - cy, px - cx
     r = int(0.45 * np.hypot(dy, dx))
@@ -41,7 +40,9 @@ def main():
     h = np.asarray(Image.open(path))[..., 1].astype(float)
     n = min(h.shape)
     h = h[:n, :n] - h[:n, :n].mean()                    # square crop of the sensor
-    U0, sb = sideband(h)
+    # full bandwidth: the low carrier of these holograms makes a sideband filter too narrow;
+    # the real image is spatially separated from the twin and the zero order in the Fresnel plane
+    U0, sb = h.astype(complex), (0, 0, 0)
     zs = np.arange(z0, z1 + 1e-9, dz) / 100
     zref = zs[len(zs) // 2]
     ds = 4                                              # analysis grid: n/ds pixels
@@ -65,7 +66,13 @@ def main():
     depth = zs[k] * 100
     allfocus = np.take_along_axis(inten, k[None], 0)[0]
     bright = ndimage.gaussian_filter(allfocus, 3)
-    mask = (bright > np.percentile(bright, 75)) & (peak > 1.5)
+    # analysis window around the real image (largest bright blob outside the zero order)
+    b = bright.copy(); c0 = m // 2; w0 = m // 10
+    b[c0 - w0:c0 + w0, c0 - w0:c0 + w0] = 0
+    oy, ox = np.unravel_index(ndimage.gaussian_filter(b, 6).argmax(), b.shape)
+    Y, X = np.ogrid[:m, :m]
+    win = (np.abs(Y - oy) < m // 7) & (np.abs(X - ox) < m // 7)
+    mask = win & (bright > np.percentile(bright[win], 40)) & (peak > 1.3)
     dmed = ndimage.median_filter(np.where(mask, depth, np.nan), 9)
 
     out = Path(prefix)
@@ -92,7 +99,7 @@ def main():
         for x, y, z, i in pts:
             v = int(255 * min(1, (i / imax) ** 0.5))
             f.write(f'{x:.3f} {y:.3f} {z:.3f} {v} {v} {v}\n')
-    summary = {'hologram': path, 'sideband_dy_dx_r': sb, 'z_scan_cm': [z0, z1, dz], 'z_ref_cm': zref * 100,
+    summary = {'hologram': path, 'sideband_dy_dx_r': [int(v) for v in sb], 'z_scan_cm': [z0, z1, dz], 'z_ref_cm': zref * 100,
                'pixel_mm': dxi_ref, 'points': len(pts),
                'depth_cm_percentiles_5_50_95': [float(np.percentile(depth[mask], q)) for q in (5, 50, 95)] if mask.any() else None,
                'depth_of_field_mm_lambda_over_NA2': float(WL / (n * DX / (2 * zref)) ** 2 * 1e3)}
