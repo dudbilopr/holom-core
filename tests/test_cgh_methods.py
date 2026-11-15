@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Each published method reconstructs what it should; physical figures of merit are checked."""
 import numpy as np
 import pytest

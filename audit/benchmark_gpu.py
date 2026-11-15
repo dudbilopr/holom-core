@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Benchmark of the complete reconstruction (not only the FFT) on this machine.
 
 Usage: python audit/benchmark_gpu.py   (writes audit/out/benchmark_gpu.md and .json)

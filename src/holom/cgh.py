@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Computer-generated holograms of HGC_GOM_V2012 (thesis 2012, RCTA 2013).
 
 Faithful ports of the eight MATLAB routines. Every function returns

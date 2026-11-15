@@ -1,0 +1,20 @@
+holom-core
+Copyright 2026 Dudbil Olvasada Pabón Riaño (ORCID: 0000-0001-7239-3497)
+
+This product includes software developed independently in Python (NumPy, SciPy,
+PyTorch) for scalar diffraction, computer-generated holography, zero-order
+suppression, autofocus, and reproducible numerical auditing.
+
+Intellectual Property & Attribution Notices:
+1. Historical Legacy Separation (HOLOGOM):
+   The legacy MATLAB software HOLOGOM / HDFresnel_GOM_V1 (2015) holds a separate
+   Colombian copyright registration (DNDA Soporte Lógico No. 13-75-287, 2019).
+   holom-core is an original 2026 clean-room Python/PyTorch implementation written
+   from standard physical optics equations. No proprietary third-party binaries or
+   original MATLAB source files are redistributed in this repository.
+
+2. JTC Optical Encryption Legacy Routines (holom.legacy.jtc):
+   The routines in `src/holom/legacy/jtc.py` reproduce for scientific
+   reproducibility and numerical audit the Joint Transform Correlator (JTC)
+   encryption formulations originally authored in MATLAB by
+   Prof. Jorge E. Rueda-Parada (Grupo de Óptica Moderna, Universidad de Pamplona).

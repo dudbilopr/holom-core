@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Filter the OpenAlex results by relevance and write the vault catalog and a BibTeX file."""
 import json
 import re

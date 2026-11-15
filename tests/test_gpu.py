@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """The PyTorch backend reproduces the NumPy reference (complex64 on the device)."""
 import numpy as np
 import pytest

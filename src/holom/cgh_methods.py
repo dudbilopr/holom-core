@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Hologram generation methods from the literature, implemented as they are published.
 
 Every function documents its equation and the original reference (DOIs verified in OpenAlex,

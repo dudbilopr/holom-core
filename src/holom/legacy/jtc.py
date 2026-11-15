@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño (Python reimplementation for numerical audit)
+# Original JTC MATLAB formulation credited to Prof. Jorge E. Rueda-Parada.
+
 """Joint transform correlator encryption (JTC/, JTC_Jorge_Rueda/).
 
 Code by Prof. Jorge E. Rueda-Parada, ported for reproducibility and cited accordingly.

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Propagators and reference wave of the 2015 MATLAB scripts (Algunos Resultados/).
 
 All functions accept 2-D arrays or (N, M, P) stacks, like the originals.

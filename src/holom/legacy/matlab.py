@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Exact equivalents of the MATLAB built-ins used by the legacy code."""
 import numpy as np
 from scipy import ndimage

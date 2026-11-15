@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Scalar diffraction propagators.
 
 Conventions: arrays are indexed (row, col) = (y, x); spatial coordinates are

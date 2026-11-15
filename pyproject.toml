@@ -1,21 +1,59 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "holom-core"
-version = "0.1.0"
-description = "Python port and audit of the HGC-GOM (2012) and HOLO_GOM (2015) digital holography codes"
-authors = [{ name = "Dudbil Olvasada Pabón Riaño" }]
+version = "0.3.0"
+description = "Python and PyTorch framework and numerical audit for digital holography (HGC-GOM / HOLO_GOM)"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Dudbil Olvasada Pabón Riaño", email = "dpabon180@unab.edu.co" }]
 requires-python = ">=3.10"
+keywords = [
+    "digital-holography",
+    "computer-generated-holography",
+    "fresnel-diffraction",
+    "angular-spectrum",
+    "zero-order-suppression",
+    "autofocus",
+    "pytorch",
+    "gpu",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
 dependencies = ["numpy>=1.24", "scipy>=1.10", "pillow>=10"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "matplotlib>=3.7"]
-gpu = ["torch>=2.9"]
+dev = ["pytest>=7", "pytest-cov>=4", "matplotlib>=3.7", "ruff>=0.6"]
+gpu = ["torch>=2.2"]
+docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "pymdown-extensions>=10.0"]
+
+[project.urls]
+Homepage = "https://github.com/dudbilopr/holom-core"
+Repository = "https://github.com/dudbilopr/holom-core"
+Documentation = "https://dudbilopr.github.io/holom-core/"
+"Bug Tracker" = "https://github.com/dudbilopr/holom-core/issues"
+Changelog = "https://github.com/dudbilopr/holom-core/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

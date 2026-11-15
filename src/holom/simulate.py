@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Synthetic off-axis Fresnel holograms with known ground truth.
 
 Replaces the missing raw CMOS captures of the 2015 thesis: same wavelength,

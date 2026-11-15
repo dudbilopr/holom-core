@@ -1,0 +1,52 @@
+site_name: holom-core
+site_description: Verified Python and PyTorch framework for scalar diffraction, digital holography, zero-order suppression, and numerical verification of legacy optical software.
+site_author: Dudbil Olvasada Pabón Riaño
+repo_url: https://github.com/dudbilopr/holom-core
+repo_name: dudbilopr/holom-core
+copyright: Copyright (c) 2026 Dudbil Olvasada Pabón Riaño · Apache-2.0
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: pink
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: pink
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Overview: index.md
+  - Physics & Equations: physics.md
+  - Legacy Audit & Benchmarks: legacy_audit.md
+  - API Reference: api.md
+  - Deployment & Munich 2027: deployment_and_conferences.md
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js
+  - javascripts/katex.js
+
+extra_css:
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css

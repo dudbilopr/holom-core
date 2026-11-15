@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use holom-core in your research or teaching, please cite it as below."
+type: software
+title: "holom-core: Numerical Diffraction, Computer-Generated Holography, and Reproducible Legacy Audit in Python and PyTorch"
+version: "0.3.0"
+date-released: "2026-11-15"
+license: Apache-2.0
+repository-code: "https://github.com/dudbilopr/holom-core"
+url: "https://github.com/dudbilopr/holom-core"
+authors:
+  - family-names: "Pabón Riaño"
+    given-names: "Dudbil Olvasada"
+    orcid: "https://orcid.org/0000-0001-7239-3497"
+    email: "dpabon180@unab.edu.co"
+    affiliation: "Universidad Autónoma de Bucaramanga (UNAB)"
+keywords:
+  - digital holography
+  - computer-generated holography
+  - fresnel diffraction
+  - angular spectrum
+  - zero-order suppression
+  - autofocus
+  - gpu acceleration
+  - pytorch
+abstract: >
+  holom-core is a verified Python and PyTorch library implementing scalar
+  diffraction propagators (single-FFT Fresnel, convolution-based Fresnel, and
+  angular spectrum), classic and iterative computer-generated hologram (CGH)
+  encodings, zero-order suppression filters, multi-plane depth-from-focus, and
+  an automated numerical audit of legacy MATLAB digital holography codes
+  developed in 2012-2015.

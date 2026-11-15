@@ -1,0 +1,13 @@
+include LICENSE
+include NOTICE
+include CITATION.cff
+include CHANGELOG.md
+include README.md
+include pyproject.toml
+recursive-include src *.py
+prune .venv
+prune audit
+prune literature
+prune tests
+prune .github
+global-exclude __pycache__ *.py[cod] *.log

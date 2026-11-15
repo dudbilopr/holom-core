@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Every legacy port runs, has the documented behaviour, and its known defects are pinned down."""
 import numpy as np
 import pytest

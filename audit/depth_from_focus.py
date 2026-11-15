@@ -1,14 +1,19 @@
-"""3-D shape of real objects by depth from focus (holom.focus.depth_from_focus).
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
 
-Usage: python audit/depth_from_focus.py   (writes audit/out/depth_*.png, *.ply, depth_real.json)
+"""3-D shape recovery by depth from focus (holom.focus.depth_from_focus).
 
+Usage: python audit/depth_from_focus.py [--archive-dir PATH] [--require-real]
+Writes audit/out/depth_*.png, *.ply, depth_real.json.
+
+When the 2015 archive is present:
 - Aeroplane: object wave O R* from the four phase-shifted holograms (no zero order, no twin).
 - Die: single hologram minus its mean; the analysis is limited to the window of its real image.
-Depth is the z of minimum local focus measure (validated on two simulated depths). An earlier
-version of this script filled pixels outside each plane with 0, which created false foci at
-the edge of the scan; its die result (median 12.0 cm) is superseded.
+When the archive is absent on a fresh clone, falls back to a synthetic two-plane Fresnel field.
 """
+import argparse
 import json
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -32,8 +37,9 @@ def green(p):
 
 def intensity(field, z):
     u, _, _ = fresnel(field, WL, DX, DX, z)
-    m = N // B
-    return (np.abs(u) ** 2).reshape(m, B, m, B).mean(axis=(1, 3))
+    ny, nx = u.shape
+    my, mx = ny // B, nx // B
+    return (np.abs(u[:my * B, :mx * B]) ** 2).reshape(my, B, mx, B).mean(axis=(1, 3))
 
 
 def analyse(name, field, zs, window=None):
@@ -67,7 +73,7 @@ def analyse(name, field, zs, window=None):
     yy, xx = np.nonzero(keep)
     m = I.shape[0]
     imax = np.sqrt(I[keep]).max() if len(yy) else 1
-    with open(OUT / f'depth_{name}.ply', 'w') as f:
+    with open(OUT / f'depth_{name}.ply', 'w', encoding='utf-8') as f:
         f.write(f'ply\nformat ascii 1.0\nelement vertex {len(yy)}\nproperty float x\nproperty float y\nproperty float z\n'
                 'property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n')
         for y, x in zip(yy, xx):
@@ -77,16 +83,43 @@ def analyse(name, field, zs, window=None):
     return summary
 
 
-def main():
-    OUT.mkdir(exist_ok=True)
-    d = R / 'DH_REconstruccion_Final/Pactrica_Reconstruccion'
-    I = [green(d / f'I{k}Holograma_Avion_16042015_22.bmp') for k in (1, 2, 3, 4)]
-    res = [analyse('avion_psi', filters.phase_shifting_4step(*I), -np.arange(0.15, 0.4001, 0.005))]
-    dado = filters.subtract_mean(green(R / 'DHFresnel_GOM/2Holograma_dado_16042015_14.bmp'))
-    # real-image window chosen on a reconstruction at 13 cm (rows 245-330, cols 290-395), rescaled to z_ref = 14 cm
-    k, c = 0.14 / 0.13, (N // B - 1) / 2
-    win = (slice(int(c + (245 - c) * k), int(c + (330 - c) * k)), slice(int(c + (290 - c) * k), int(c + (395 - c) * k)))
-    res.append(analyse('dado', dado, -np.arange(0.08, 0.2001, 0.0025), window=win))
+def synthetic_two_plane_field():
+    """Standalone two-plane simulated diffuse object field at z = 0.14 m and z = 0.20 m."""
+    rng = np.random.default_rng(7)
+    s = 1024
+    yy, xx = np.ogrid[:s, :s]
+    p1 = (((yy - 400) ** 2 + (xx - 400) ** 2) < 90 ** 2).astype(float)
+    p2 = (((yy - 620) ** 2 + (xx - 620) ** 2) < 90 ** 2).astype(float)
+    u1, _, _ = fresnel(p1 * np.exp(1j * 2 * np.pi * rng.random((s, s))), WL, DX, DX, 0.14)
+    u2, _, _ = fresnel(p2 * np.exp(1j * 2 * np.pi * rng.random((s, s))), WL, DX, DX, 0.20)
+    return u1 + u2
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--archive-dir', type=Path, default=R, help='Path to Algunos Resultados/')
+    parser.add_argument('--require-real', action='store_true', help='Fail if real 2015 archive is absent')
+    args = parser.parse_args(argv)
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    d = args.archive_dir / 'DH_REconstruccion_Final/Pactrica_Reconstruccion'
+    dado_p = args.archive_dir / 'DHFresnel_GOM/2Holograma_dado_16042015_14.bmp'
+    has_real = dado_p.exists() and all((d / f'I{k}Holograma_Avion_16042015_22.bmp').exists() for k in (1, 2, 3, 4))
+
+    if has_real:
+        I = [green(d / f'I{k}Holograma_Avion_16042015_22.bmp') for k in (1, 2, 3, 4)]
+        res = [analyse('avion_psi', filters.phase_shifting_4step(*I), -np.arange(0.15, 0.4001, 0.005))]
+        dado = filters.subtract_mean(green(dado_p))
+        # real-image window chosen on a reconstruction at 13 cm (rows 245-330, cols 290-395), rescaled to z_ref = 14 cm
+        k, c = 0.14 / 0.13, (N // B - 1) / 2
+        win = (slice(int(c + (245 - c) * k), int(c + (330 - c) * k)), slice(int(c + (290 - c) * k), int(c + (395 - c) * k)))
+        res.append(analyse('dado', dado, -np.arange(0.08, 0.2001, 0.0025), window=win))
+    else:
+        if args.require_real:
+            print(f'Error: real 2015 archive not found in {args.archive_dir}', file=sys.stderr)
+            sys.exit(1)
+        res = [analyse('synthetic_two_plane', synthetic_two_plane_field(), -np.arange(0.10, 0.2401, 0.005))]
+
     (OUT / 'depth_real.json').write_text(json.dumps(res, indent=1), encoding='utf-8')
 
 

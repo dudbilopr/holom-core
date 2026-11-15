@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Literature search 2016-2026 via OpenAlex; downloads legal open-access PDFs.
 
 Usage: python litsearch.py <out_dir> <catalog_json>

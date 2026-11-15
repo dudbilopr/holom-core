@@ -1,0 +1,24 @@
+{
+  "title": "holom-core: Numerical Diffraction, Computer-Generated Holography, and Reproducible Legacy Audit in Python and PyTorch",
+  "upload_type": "software",
+  "license": "Apache-2.0",
+  "creators": [
+    {
+      "name": "Pabón Riaño, Dudbil Olvasada",
+      "affiliation": "Universidad Autónoma de Bucaramanga (UNAB)",
+      "orcid": "0000-0001-7239-3497"
+    }
+  ],
+  "keywords": [
+    "digital holography",
+    "computer-generated holography",
+    "fresnel diffraction",
+    "angular spectrum",
+    "pytorch",
+    "gpu computing",
+    "scientific software audit"
+  ],
+  "access_right": "open",
+  "language": "eng",
+  "description": "Verified Python and PyTorch framework for scalar diffraction, computer-generated holograms, zero-order suppression, autofocus, and reproducible numerical verification of legacy MATLAB digital holography software (2012-2015)."
+}

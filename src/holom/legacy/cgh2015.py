@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Computer-generated holograms of the 2015 archive (Algunos Resultados/): Fourier and Fresnel
 CGH with a reference wave, Burch, Lee, Lohmann detour phase, kinoforms and SLM phase masks.
 Each function returns the hologram and the reconstruction the script displayed."""

@@ -1,7 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Check the Python ports against images the original MATLAB scripts saved in Algunos Resultados/.
 
-Usage: python audit/validate_legacy.py   (writes audit/out/validation_legacy.md and PNGs)
+Usage: python audit/validate_legacy.py [--archive-dir PATH] [--strict]
+Writes audit/out/validation_legacy.md and PNGs when the external MATLAB outputs archive is present.
 """
+import argparse
+import sys
 import time
 from pathlib import Path
 
@@ -73,7 +79,19 @@ def check_convolution():
 
 
 if __name__ == '__main__':
-    OUT.mkdir(exist_ok=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--archive-dir', type=Path, default=AR, help='Path to Algunos Resultados/')
+    parser.add_argument('--strict', action='store_true', help='Exit non-zero if external MATLAB archive is missing')
+    args = parser.parse_args()
+    AR = args.archive_dir
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    if not (AR / 'DH_REconstruccion_Final/Pactrica_Reconstruccion/Transformada_de_Fresnel.jpg').exists():
+        msg = f'External MATLAB output archive not found at {AR}; skipping reference image check.'
+        print(msg)
+        if args.strict:
+            sys.exit(1)
+        sys.exit(0)
     check_phase_shift()
     check_convolution()
     lines = ['# Validación de los ports contra salidas guardadas por MATLAB', '',

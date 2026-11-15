@@ -1,8 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Quantitative audit of the legacy MATLAB algorithms through their Python ports.
 
 Usage:  python audit/run_audit.py
-Writes audit/out/results.md and PNG figures. All inputs are synthetic with
-known ground truth, using the optical parameters reported in the theses.
+Writes audit/out/results.md and PNG figures. Uses the local 2012/2015 thesis object
+when present and falls back to a deterministic synthetic test object otherwise.
 """
 import time
 from pathlib import Path
@@ -13,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-from holom import cgh, filters
+from holom import cgh, filters, gpu
 from holom.diffraction import angular_spectrum, fresnel, fresnel_legacy
 from holom.simulate import THESIS_2015, fresnel_off_axis_hologram, max_carrier_angle
 
@@ -21,6 +24,20 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "out"
 OBJ_2012 = ROOT / "Tesis Pregrado/FUENTES_Trabajo_de_GradoHGC-GOM2012/Archivos_Programa/Objetos/GOM512X384.bmp"
 lines = []
+
+
+def _load_test_object_2012():
+    if OBJ_2012.exists():
+        img = np.asarray(Image.open(OBJ_2012).convert("L"))
+        return img, f"`{OBJ_2012.name}` {img.shape[1]}x{img.shape[0]} px"
+    h, w = 384, 512
+    img = np.zeros((h, w), dtype=np.uint8)
+    yy, xx = np.ogrid[:h, :w]
+    img[((yy - h // 2) ** 2 + (xx - 160) ** 2) < 68 ** 2] = 255
+    for k in range(4):
+        x0 = 265 + k * 42
+        img[100:284, x0:x0 + 20] = 255
+    return img, f"`synthetic_gom_target` {w}x{h} px (standalone fallback)"
 
 
 def log(s=""):
@@ -35,8 +52,8 @@ def corr(a, b):
 def audit_cgh():
     log("## 1. Hologramas generados por computador (HGC_GOM_V2012)")
     log()
-    img = np.asarray(Image.open(OBJ_2012).convert("L"))
-    log(f"Objeto: `{OBJ_2012.name}` {img.shape[1]}x{img.shape[0]} px, semilla RNG = 0. "
+    img, label = _load_test_object_2012()
+    log(f"Objeto: {label}, semilla RNG = 0. "
         "Reconstrucción digital tal como la calcula cada rutina MATLAB.")
     log()
     n, m = img.shape
@@ -69,7 +86,7 @@ def audit_cgh():
 def audit_kinoform():
     log("### 1b. Reconstrucción del kinoform")
     log()
-    img = np.asarray(Image.open(OBJ_2012).convert("L"))
+    img, _ = _load_test_object_2012()
     n, m = img.shape
     A, H, _ = cgh.kinoform(img, rng=0)
     log("| Reconstrucción | Corr. con el objeto | Eficiencia (energía en ventana) | Orden cero |")
@@ -161,12 +178,23 @@ def audit_benchmark():
         t0 = time.perf_counter(); np.fft.fft2(a); t.append(time.perf_counter() - t0)
     log(f"- Tesis 2015 (i7-4510U, MATLAB): CPU 0.6561 s, GPU GeForce 840M 0.0387 s, razón **{0.6561 / 0.0387:.1f}x**")
     log(f"- Esta máquina, NumPy CPU: **{np.median(t):.3f} s** (mediana de 5)")
-    log("- GPU (GTX 1650) pendiente: requiere instalar PyTorch con CUDA en el entorno.")
+    if gpu.available():
+        import torch
+        ta = torch.from_numpy(a.astype(np.float32)).to("cuda")
+        torch.fft.fft2(ta); torch.cuda.synchronize()
+        tg = []
+        for _ in range(20):
+            t0 = time.perf_counter(); torch.fft.fft2(ta); torch.cuda.synchronize(); tg.append(time.perf_counter() - t0)
+        dev_name = torch.cuda.get_device_name(0)
+        med_g = float(np.median(tg))
+        log(f"- Esta máquina, PyTorch CUDA ({dev_name}, complex64): **{med_g * 1e3:.2f} ms** (mediana de 20; razón CPU/GPU **{np.median(t) / med_g:.1f}x**). Ver `benchmark_gpu.py` para el pipeline completo.")
+    else:
+        log("- GPU CUDA no disponible en este entorno (ejecute `pip install -e \".[gpu]\"` en máquina con GPU).")
     log()
 
 
 if __name__ == "__main__":
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     log("# Resultados de auditoría holom-core")
     log()
     audit_cgh()

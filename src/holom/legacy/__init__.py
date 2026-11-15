@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Faithful Python ports of every MATLAB routine in the author's archive.
 
 These functions reproduce the original code line by line, including its

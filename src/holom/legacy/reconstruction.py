@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Reconstruction scripts of the 2015 work (DH_REconstruccion_Final/, Difraccion_Por_Convolucion/,
 DHFresnel_GOM/ GUIs). Interactive selections become explicit arguments."""
 import numpy as np

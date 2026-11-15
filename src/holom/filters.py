@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Zero-order (DC) and twin-image suppression, thesis 2015 chapter 7.
 
 Methods 7.3.1-7.3.4 are ports of the thesis; `sideband_filter` is the

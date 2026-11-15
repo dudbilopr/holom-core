@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """Multi-plane refocusing on a common physical grid and region-of-interest autofocus.
 
 The single-FFT Fresnel transform returns a pixel pitch d_xi = lambda z / (N dx) that grows with z,

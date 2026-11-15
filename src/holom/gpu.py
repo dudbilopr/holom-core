@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Dudbil Olvasada Pabón Riaño
+
 """GPU reconstruction with PyTorch (optional dependency).
 
 `FresnelPlan` precomputes the input and output chirps of the single-FFT Fresnel transform
