@@ -1,6 +1,7 @@
 # holom-core
 
 [![CI](https://github.com/dudbilopr/holom-core/actions/workflows/ci.yml/badge.svg)](https://github.com/dudbilopr/holom-core/actions/workflows/ci.yml)
+[![DOI](https://zenodo.org/badge/1459117818.svg)](https://doi.org/10.5281/zenodo.24255654)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue.svg)](pyproject.toml)
 [![ORCID](https://img.shields.io/badge/ORCID-0000--0001--7239--3497-A6CE39.svg)](https://orcid.org/0000-0001-7239-3497)

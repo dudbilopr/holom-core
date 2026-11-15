@@ -3,6 +3,7 @@ message: "If you use holom-core in your research or teaching, please cite it as 
 type: software
 title: "holom-core: Numerical Diffraction, Computer-Generated Holography, and Reproducible Legacy Audit in Python and PyTorch"
 version: "0.3.0"
+doi: "10.5281/zenodo.24255655"
 date-released: "2026-11-15"
 license: Apache-2.0
 repository-code: "https://github.com/dudbilopr/holom-core"

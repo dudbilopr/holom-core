@@ -1,5 +1,7 @@
 # holom-core (`v0.3.0`)
 
+[![DOI](https://zenodo.org/badge/1459117818.svg)](https://doi.org/10.5281/zenodo.24255654)
+
 `holom-core` is an open-source Python and PyTorch library (`Apache-2.0`) for **scalar optical diffraction**, **computer-generated holography (CGH)**, **zero-order and twin-image suppression**, **multi-plane autofocus**, and **reproducible numerical auditing** of historical MATLAB digital holography codes developed in 2012–2015.
 
 It pairs numerically with the browser-based 3-D virtual laboratory **[HoloLab10.easy](https://github.com/dudbilopr/hololab-10easy)**.
